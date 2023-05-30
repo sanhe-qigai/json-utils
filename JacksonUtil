@@ -1,0 +1,167 @@
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class JsonUtil {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper IGNORE_NULL_MAPPER = new ObjectMapper();
+
+    static {
+        IGNORE_NULL_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+
+    @Nullable
+    public static String bean2JsonIgnoreNull(Object data) {
+        try {
+            return IGNORE_NULL_MAPPER.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            log.warn("bean2JsonIgnoreNull failed parsing: {}", data);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static String bean2Json(Object data) {
+        try {
+            return MAPPER.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            log.warn("bean2Json failed parsing: {}", data);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static <T> T json2Bean(byte[] jsonData, Class<T> beanType) {
+        try {
+            return MAPPER.readValue(StringUtil.bytes2String(jsonData), beanType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("json2Bean[byte[]] failed parsing: {}", StringUtil.bytes2String(jsonData));
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public static <T> T json2Bean(String jsonData, Class<T> beanType) {
+        try {
+            return MAPPER.readValue(jsonData, beanType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("json2Bean[string] failed parsing: {}", jsonData);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static <T> T json2Bean(Map<?, ?> m, Class<T> beanType) {
+        try {
+            return MAPPER.convertValue(m, beanType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("json2Bean[map] failed parsing: {}", m);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static <T> T json2Bean(Object o, Class<T> beanType) {
+        try {
+            return MAPPER.convertValue(o, beanType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("json2Bean[map] failed parsing: {}", o);
+        }
+        return null;
+    }
+
+    @Nullable
+    public static <T> T objectNode2Bean(ObjectNode node, Class<T> beanType) {
+        try {
+            return MAPPER.treeToValue(node, beanType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("objectNode2Bean failed parsing: {}", node);
+        }
+
+        return null;
+    }
+
+
+    @Nullable
+    public static <T> List<T> json2List(String jsonData, Class<T> beanType) {
+        JavaType javaType = MAPPER.getTypeFactory().constructParametricType(List.class, beanType);
+
+        try {
+            return MAPPER.readValue(jsonData, javaType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("json2List failed parsing: {}", jsonData);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public static <K, V> Map<K, V> json2Map(String jsonData, Class<K> keyType, Class<V> valueType) {
+        JavaType javaType = MAPPER.getTypeFactory().constructMapType(Map.class, keyType, valueType);
+
+        try {
+            return MAPPER.readValue(jsonData, javaType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("json2Map failed parsing: {}", jsonData);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public static <K, V> Map<K, V> objectNode2Map(ObjectNode node, Class<K> keyType, Class<V> valueType) {
+        JavaType javaType = MAPPER.getTypeFactory().constructMapType(Map.class, keyType, valueType);
+
+        try {
+            return MAPPER.convertValue(node, javaType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("objectNode2Map failed parsing: {}", node);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public static <K, V> Map<K, V> object2Map(Object o, Class<K> keyType, Class<V> valueType) {
+        JavaType javaType = MAPPER.getTypeFactory().constructMapType(Map.class, keyType, valueType);
+
+        try {
+            return MAPPER.convertValue(o, javaType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.warn("object2Node failed parsing: {}", o);
+        }
+
+        return null;
+    }
+
+    @NotNull
+    public static Boolean isEqual(String jsonData1, String jsonData2) throws JsonProcessingException {
+        return IGNORE_NULL_MAPPER.readTree(jsonData1).equals(IGNORE_NULL_MAPPER.readTree(jsonData2));
+    }
+}
+
